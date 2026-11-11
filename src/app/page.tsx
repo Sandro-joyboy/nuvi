@@ -135,12 +135,13 @@ export default function HeroPage() {
           alt="nuvi"
           draggable={false}
           className="hero-top-logo"
+          data-cursor="component"
         />
       </header>
 
       {/* 3. Centro: Conteúdo e Transição Elástica */}
       <section className="hero-center">
-        <div className="hero-badge-wrapper">
+        <div className="hero-badge-wrapper" data-cursor="component">
           <img
             src="/Frame.svg"
             alt="3,5000 + Brevemente, criadores angolanos irão ganhar com vídeos para marcas."
@@ -511,19 +512,19 @@ export default function HeroPage() {
           />
         </svg>
 
-        <div className="orbit-node node-yt">
+        <div className="orbit-node node-yt" data-cursor="component">
           <img src="/YT.png" alt="YouTube" draggable={false} className="float-icon float-1 icon-social" />
         </div>
-        <div className="orbit-node node-calendary">
+        <div className="orbit-node node-calendary" data-cursor="component">
           <img src="/CALENDARY.png" alt="Calendário" draggable={false} className="float-icon float-2 icon-asset" />
         </div>
-        <div className="orbit-node node-ig">
+        <div className="orbit-node node-ig" data-cursor="component">
           <img src="/IG.png" alt="Instagram" draggable={false} className="float-icon float-3 icon-ig" />
         </div>
-        <div className="orbit-node node-money">
+        <div className="orbit-node node-money" data-cursor="component">
           <img src="/MONEY.png" alt="Dinheiro" draggable={false} className="float-icon float-4 icon-asset" />
         </div>
-        <div className="orbit-node node-tk">
+        <div className="orbit-node node-tk" data-cursor="component">
           <img src="/TK.png" alt="TikTok" draggable={false} className="float-icon float-5 icon-social" />
         </div>
       </div>
@@ -532,9 +533,17 @@ export default function HeroPage() {
       <footer className="hero-footer">
         <div className="hero-footer-inner">
           <div className="footer-left">
-            <div className="liquid-glass-pill">
+            <a
+              href="https://www.instagram.com/sandro_joyboy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="liquid-glass-pill"
+              data-cursor="button"
+              onClick={() => track("click_by_sandro_instagram")}
+              aria-label="Instagram de Sandro (@sandro_joyboy)"
+            >
               <span className="liquid-glass-text">by Sandro :)</span>
-            </div>
+            </a>
           </div>
 
           <div className="footer-center">
@@ -604,7 +613,12 @@ export default function HeroPage() {
           height: clamp(20px, 2.8vh, 25px);
           width: auto;
           display: block;
-          pointer-events: none;
+          pointer-events: auto;
+          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-top-logo:hover {
+          transform: scale(1.06);
         }
 
         .hero-center {
@@ -626,6 +640,11 @@ export default function HeroPage() {
           margin-bottom: clamp(12px, 2vh, 18px);
           display: flex;
           justify-content: center;
+          transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-badge-wrapper:hover {
+          transform: translateY(-2px) scale(1.03);
         }
 
         .hero-badge-img {
@@ -1169,7 +1188,12 @@ export default function HeroPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          pointer-events: none;
+          pointer-events: auto;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .orbit-node:hover {
+          transform: translate(-50%, -50%) scale(1.14) translateY(-4px);
         }
 
         /* Coordenadas exatas da curva quadrática M 0 240 Q 500 -192 1000 240 (viewBox 1000x240) */
@@ -1258,6 +1282,31 @@ export default function HeroPage() {
             inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.22),
             inset 0 0 10px 0 rgba(255, 255, 255, 0.1);
           overflow: hidden;
+          text-decoration: none;
+          cursor: pointer;
+          transition:
+            transform 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+            background 0.24s ease,
+            box-shadow 0.24s ease;
+        }
+
+        .liquid-glass-pill:hover {
+          transform: translateY(-2px) scale(1.05);
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.36) 0%,
+            rgba(255, 255, 255, 0.14) 50%,
+            rgba(255, 255, 255, 0.24) 100%
+          );
+          box-shadow:
+            inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.85),
+            inset 0 -1px 1.5px 0 rgba(255, 255, 255, 0.32),
+            inset 0 0 12px 0 rgba(255, 255, 255, 0.16),
+            0 6px 18px rgba(0, 0, 0, 0.14);
+        }
+
+        .liquid-glass-pill:active {
+          transform: translateY(0) scale(0.96);
         }
 
         .liquid-glass-text {

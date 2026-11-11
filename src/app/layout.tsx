@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
+import { CustomCursor } from "@/components/CustomCursor";
 import "./globals.css";
 
 const gtMechanik = localFont({
@@ -61,6 +62,7 @@ export default function RootLayout({
   return (
     <html lang="pt" className={`${gtMechanik.variable} ${sfPro.variable}`}>
       <body className="antialiased text-white">
+        <CustomCursor />
         {children}
         <Analytics />
       </body>

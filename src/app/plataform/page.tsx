@@ -91,6 +91,7 @@ export default function PlataformPage() {
           <div
             key={topic.id}
             className="chapter-nav-item"
+            data-cursor="button"
             onClick={() => scrollToSection(topic.id)}
           >
             <div className={`chapter-dash ${activeSection === index ? "active" : ""}`} />
@@ -175,7 +176,17 @@ export default function PlataformPage() {
           {/* Assinatura e Link Final com Underline */}
           <div className="signature-area">
             <p className="signature-subtitle">Com carinho,</p>
-            <p className="signature-author">Sandro :)</p>
+            <p className="signature-author">
+              <a
+                href="https://www.instagram.com/sandro_joyboy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="signature-author-link"
+                data-cursor="button"
+              >
+                Sandro :)
+              </a>
+            </p>
             
             <div className="waitlist-link-wrapper">
               <Link href="/" className="waitlist-link">
@@ -420,6 +431,18 @@ export default function PlataformPage() {
           font-weight: 700;
           color: #FFFFFF;
           margin: 0 0 36px 0;
+        }
+
+        .signature-author-link {
+          color: inherit;
+          text-decoration: none;
+          display: inline-block;
+          transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+        }
+
+        .signature-author-link:hover {
+          transform: translateY(-1.5px) scale(1.03);
+          opacity: 0.9;
         }
 
         .waitlist-link-wrapper {
