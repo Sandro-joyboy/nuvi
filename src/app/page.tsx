@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, QrCode } from "lucide-react";
+import { track } from "@vercel/analytics";
 import { joinWaitlistAction } from "@/app/actions/waitlist";
 import { QRCodeSVG } from "@/components/QRCodeSVG";
 
@@ -56,6 +57,10 @@ export default function HeroPage() {
       const res = await joinWaitlistAction(formData);
 
       if (res.success && typeof res.position !== "undefined") {
+        track("waitlist_signup", {
+          alreadyRegistered: Boolean(res.alreadyRegistered),
+          source,
+        });
         setPosition(res.position);
         setAlreadyRegistered(Boolean(res.alreadyRegistered));
         setIsSubmitted(true);
@@ -76,6 +81,7 @@ export default function HeroPage() {
       : "https://nuvi.app";
 
   const handleCopyInvite = () => {
+    track("invite_link_copied");
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(inviteUrl);
       setCopiedInvite(true);
@@ -84,12 +90,14 @@ export default function HeroPage() {
   };
 
   const shareWhatsApp = () => {
+    track("share_whatsapp");
     const text = `Olha o que está a chegar a Angola: a Nuvi, o lugar onde marcas e creators se encontram para fechar parcerias de verdade. Garante já o teu acesso prioritário antes de abrir ao público: ${inviteUrl}`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
   const handleShare = () => {
+    track("native_share");
     const shareUrl = window.location.href;
     if (navigator.share) {
       navigator.share({
@@ -157,7 +165,10 @@ export default function HeroPage() {
                 key="start-btn"
                 type="button"
                 className="btn-comecar"
-                onClick={() => setShowInputState(true)}
+                onClick={() => {
+                  track("click_start_now");
+                  setShowInputState(true);
+                }}
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{
                   opacity: 1,
@@ -426,7 +437,12 @@ export default function HeroPage() {
                         <button
                           type="button"
                           className={`nuvi-action-pill btn-qr ${showInlineQR ? "active-qr" : ""}`}
-                          onClick={() => setShowInlineQR((prev) => !prev)}
+                          onClick={() => {
+                            setShowInlineQR((prev) => {
+                              if (!prev) track("view_qr_code");
+                              return !prev;
+                            });
+                          }}
                           title="Mostrar ou ocultar QR Code"
                           aria-label="Mostrar ou ocultar QR Code"
                         >
