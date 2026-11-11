@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-title: var(--font-gt-mechanik), sans-serif;
+  --font-sans: var(--font-sf-pro), -apple-system, BlinkMacSystemFont, sans-serif;
+}
