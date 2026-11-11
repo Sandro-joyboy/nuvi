@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
+import { resendPendingWaitlistEmailsAction } from '@/app/actions/waitlist'
 import type { WaitlistMetrics, WaitlistEntry } from '@/lib/admin-waitlist'
 
 interface Props {
@@ -11,8 +13,34 @@ interface Props {
 }
 
 export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedSource, setSelectedSource] = useState<string>('all')
+  const [isResending, setIsResending] = useState(false)
+  const [resendStatus, setResendStatus] = useState<string | null>(null)
+
+  const pendingCount = useMemo(() => {
+    return metrics.entries.filter((e) => !e.email_sent).length
+  }, [metrics.entries])
+
+  const handleResendPending = async () => {
+    setIsResending(true)
+    setResendStatus(null)
+    try {
+      const res = await resendPendingWaitlistEmailsAction()
+      if (res.success) {
+        setResendStatus(`${res.sentCount} e-mail(s) enviado(s) com sucesso!`)
+        router.refresh()
+      } else {
+        setResendStatus(res.error || 'Erro ao reenviar.')
+      }
+    } catch {
+      setResendStatus('Erro inesperado de ligação.')
+    } finally {
+      setIsResending(false)
+      setTimeout(() => setResendStatus(null), 4000)
+    }
+  }
 
   // Filtro de pesquisa e fonte
   const filteredEntries = useMemo(() => {
@@ -220,6 +248,33 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
           </div>
 
           <div className="controls-right">
+            {resendStatus && (
+              <span className="resend-status-text">{resendStatus}</span>
+            )}
+            {pendingCount > 0 && (
+              <button
+                type="button"
+                onClick={handleResendPending}
+                disabled={isResending}
+                className="resend-btn"
+                title="Reenviar e-mails para inscritos com status pendente"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M22 2L11 13" />
+                  <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+                {isResending
+                  ? 'A enviar...'
+                  : `Enviar Pendentes (${pendingCount})`}
+              </button>
+            )}
             <button
               type="button"
               onClick={handleExportCSV}
@@ -645,6 +700,43 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
         .export-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+        }
+
+        .resend-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #0082F6;
+          border: 1.5px solid rgba(255, 255, 255, 0.45);
+          color: #FFFFFF;
+          font-size: 13.5px;
+          font-weight: 500;
+          padding: 8px 18px;
+          border-radius: 9999px;
+          cursor: pointer;
+          transition: filter 0.2s, transform 0.2s;
+          box-shadow: 0 4px 14px rgba(0, 130, 246, 0.35);
+        }
+
+        .resend-btn:hover:not(:disabled) {
+          filter: brightness(1.1);
+          transform: scale(1.02);
+        }
+
+        .resend-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .resend-status-text {
+          font-size: 13px;
+          color: #86EFAC;
+          background: rgba(34, 197, 94, 0.2);
+          border: 1px solid rgba(34, 197, 94, 0.35);
+          padding: 6px 14px;
+          border-radius: 9999px;
+          font-weight: 500;
+          backdrop-filter: blur(8px);
         }
 
         .table-wrapper {

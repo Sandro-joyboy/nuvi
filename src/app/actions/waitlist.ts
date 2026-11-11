@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { sendWaitlistConfirmationEmail } from '@/lib/email'
 
 export interface WaitlistResult {
@@ -67,25 +68,22 @@ export async function joinWaitlistAction(formData: FormData): Promise<WaitlistRe
     const position = Number(record.position)
     const alreadyRegistered = Boolean(record.already_registered)
 
-    // 4. Envio do email em background seguro (não bloqueia nem falha o registo)
-    sendWaitlistConfirmationEmail({
-      email,
-      position,
-      alreadyRegistered,
-    })
-      .then(async (emailResult) => {
-        if (emailResult.success) {
-          try {
-            // Marca no Supabase que o email foi enviado
-            await supabase.rpc('mark_email_sent', { email_input: email })
-          } catch (err) {
-            console.error('[mark_email_sent error]:', err)
-          }
-        }
+    // 4. Envio do email de confirmação aguardado (garante envio no ambiente serverless)
+    try {
+      const emailResult = await sendWaitlistConfirmationEmail({
+        email,
+        position,
+        alreadyRegistered,
       })
-      .catch((err) => {
-        console.error('[Background Email Error]:', err)
-      })
+
+      if (emailResult.success) {
+        await supabase.rpc('mark_email_sent', { email_input: email })
+      } else {
+        console.warn('[Nodemailer send notice]:', emailResult.error)
+      }
+    } catch (emailErr) {
+      console.error('[Background Email Error]:', emailErr)
+    }
 
     return {
       success: true,
@@ -98,5 +96,62 @@ export async function joinWaitlistAction(formData: FormData): Promise<WaitlistRe
       success: false,
       error: 'Erro de ligação ao servidor. Verifique a sua ligação à internet.',
     }
+  }
+}
+
+export interface ResendPendingResult {
+  success: boolean
+  totalProcessed: number
+  sentCount: number
+  error?: string
+}
+
+/**
+ * Ação de administração para processar e reenviar e-mails pendentes
+ */
+export async function resendPendingWaitlistEmailsAction(): Promise<ResendPendingResult> {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  try {
+    const supabase = await createAdminClient()
+
+    const { data: pending, error } = await supabase
+      .from('waitlist')
+      .select('*')
+      .eq('email_sent', false)
+      .order('position', { ascending: true })
+
+    if (error || !pending) {
+      return { success: false, totalProcessed: 0, sentCount: 0, error: error?.message }
+    }
+
+    let sentCount = 0
+
+    for (const item of pending) {
+      const cleanEmail = (item.email || '').trim().toLowerCase()
+      if (!emailRegex.test(cleanEmail)) continue
+
+      const res = await sendWaitlistConfirmationEmail({
+        email: cleanEmail,
+        position: item.position,
+      })
+
+      if (res.success) {
+        await supabase
+          .from('waitlist')
+          .update({ email_sent: true })
+          .eq('id', item.id)
+        sentCount++
+      }
+    }
+
+    return {
+      success: true,
+      totalProcessed: pending.length,
+      sentCount,
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Erro ao processar e-mails pendentes'
+    return { success: false, totalProcessed: 0, sentCount: 0, error: msg }
   }
 }
