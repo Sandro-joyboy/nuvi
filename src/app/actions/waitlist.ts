@@ -155,3 +155,52 @@ export async function resendPendingWaitlistEmailsAction(): Promise<ResendPending
     return { success: false, totalProcessed: 0, sentCount: 0, error: msg }
   }
 }
+
+/**
+ * Ação de administração para eliminar um inscrito da waitlist
+ */
+export async function deleteWaitlistEntryAction(id: string): Promise<{ success: boolean; error?: string }> {
+  if (!id) {
+    return { success: false, error: 'ID inválido.' }
+  }
+
+  try {
+    // 1. Validar se quem chama é admin autenticado
+    const serverClient = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await serverClient.auth.getUser()
+
+    if (authError || !user) {
+      return { success: false, error: 'Não autorizado.' }
+    }
+
+    const adminEmails = [
+      process.env.ADMIN_EMAIL,
+      ...(process.env.ADMIN_EMAILS || '').split(','),
+      'sandro2006vieira@gmail.com',
+    ]
+      .filter(Boolean)
+      .map((e) => (e as string).trim().toLowerCase())
+
+    const currentUserEmail = (user.email || '').toLowerCase()
+    if (!adminEmails.includes(currentUserEmail)) {
+      return { success: false, error: 'Acesso restrito a administradores.' }
+    }
+
+    // 2. Executar delete com cliente admin
+    const supabase = await createAdminClient()
+    const { error } = await supabase.from('waitlist').delete().eq('id', id)
+
+    if (error) {
+      console.error('[deleteWaitlistEntryAction error]:', error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Erro ao eliminar e-mail.'
+    return { success: false, error: msg }
+  }
+}

@@ -4,7 +4,10 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut } from '@/app/actions/auth'
-import { resendPendingWaitlistEmailsAction } from '@/app/actions/waitlist'
+import {
+  resendPendingWaitlistEmailsAction,
+  deleteWaitlistEntryAction,
+} from '@/app/actions/waitlist'
 import type { WaitlistMetrics, WaitlistEntry } from '@/lib/admin-waitlist'
 
 interface Props {
@@ -18,10 +21,37 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
   const [selectedSource, setSelectedSource] = useState<string>('all')
   const [isResending, setIsResending] = useState(false)
   const [resendStatus, setResendStatus] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const pendingCount = useMemo(() => {
     return metrics.entries.filter((e) => !e.email_sent).length
   }, [metrics.entries])
+
+  const handleDelete = async (id: string, email: string) => {
+    const confirmed = window.confirm(
+      `Tens a certeza que desejas eliminar "${email}" da lista de espera?\nEsta ação não pode ser revertida.`
+    )
+    if (!confirmed) return
+
+    setDeletingId(id)
+    setFeedback(null)
+
+    try {
+      const res = await deleteWaitlistEntryAction(id)
+      if (res.success) {
+        setFeedback({ type: 'success', message: `"${email}" eliminado com sucesso.` })
+        router.refresh()
+      } else {
+        setFeedback({ type: 'error', message: res.error || 'Erro ao eliminar e-mail.' })
+      }
+    } catch {
+      setFeedback({ type: 'error', message: 'Erro de ligação ao eliminar.' })
+    } finally {
+      setDeletingId(null)
+      setTimeout(() => setFeedback(null), 4000)
+    }
+  }
 
   const handleResendPending = async () => {
     setIsResending(true)
@@ -248,6 +278,11 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
           </div>
 
           <div className="controls-right">
+            {feedback && (
+              <span className={`feedback-status-text ${feedback.type}`}>
+                {feedback.message}
+              </span>
+            )}
             {resendStatus && (
               <span className="resend-status-text">{resendStatus}</span>
             )}
@@ -307,12 +342,13 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
                 <th>Fonte</th>
                 <th>Email de Confirmação</th>
                 <th>Data</th>
+                <th style={{ width: '80px', textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {filteredEntries.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="empty-table-row">
+                  <td colSpan={6} className="empty-table-row">
                     Nenhum inscrito encontrado com os critérios de pesquisa.
                   </td>
                 </tr>
@@ -345,6 +381,36 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(row.id, row.email)}
+                        disabled={deletingId === row.id}
+                        className="delete-entry-btn"
+                        title={`Eliminar ${row.email}`}
+                        aria-label={`Eliminar ${row.email}`}
+                      >
+                        {deletingId === row.id ? (
+                          <span className="delete-spinner-mini" />
+                        ) : (
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -737,6 +803,68 @@ export function AdminWaitlistDashboard({ metrics, adminEmail }: Props) {
           border-radius: 9999px;
           font-weight: 500;
           backdrop-filter: blur(8px);
+        }
+
+        .feedback-status-text {
+          font-size: 13px;
+          padding: 6px 14px;
+          border-radius: 9999px;
+          font-weight: 500;
+          backdrop-filter: blur(8px);
+        }
+
+        .feedback-status-text.success {
+          color: #86EFAC;
+          background: rgba(34, 197, 94, 0.2);
+          border: 1px solid rgba(34, 197, 94, 0.35);
+        }
+
+        .feedback-status-text.error {
+          color: #FCA5A5;
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.35);
+        }
+
+        .delete-entry-btn {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: rgba(239, 68, 68, 0.12);
+          border: 1px solid rgba(239, 68, 68, 0.28);
+          color: #F87171;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          outline: none;
+        }
+
+        .delete-entry-btn:hover:not(:disabled) {
+          background: rgba(239, 68, 68, 0.28);
+          color: #FFFFFF;
+          border-color: rgba(239, 68, 68, 0.55);
+          transform: scale(1.08);
+        }
+
+        .delete-entry-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .delete-spinner-mini {
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: #FFFFFF;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         .table-wrapper {
