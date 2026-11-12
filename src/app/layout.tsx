@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { CustomCursor } from "@/components/CustomCursor";
@@ -49,9 +50,59 @@ const sfPro = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "nuvi — O lugar onde marcas encontram creators",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: "Nuvi — O lugar onde marcas encontram creators",
+    template: "%s | Nuvi",
+  },
   description:
-    "Ganha com o que já sabes fazer: gravar, editar e contar histórias.",
+    "Ganha com o que já sabes fazer: gravar, editar e contar histórias. A plataforma onde criadores e marcas em Angola colaboram em campanhas UGC.",
+  applicationName: "Nuvi",
+  keywords: [
+    "Nuvi",
+    "creators Angola",
+    "criadores de conteúdo Angola",
+    "UGC Angola",
+    "marcas e influenciadores",
+    "marketing de influência Angola",
+    "monetizar vídeos",
+    "parcerias com marcas",
+  ],
+  authors: [
+    { name: "Sandro", url: "https://www.instagram.com/sandro_joyboy/" },
+  ],
+  creator: "Nuvi",
+  publisher: "Nuvi",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "pt_AO",
+    alternateLocale: ["pt_PT", "pt_BR"],
+    url: "/",
+    siteName: "Nuvi",
+    title: "Nuvi — O lugar onde marcas encontram creators",
+    description:
+      "Ganha com o que já sabes fazer: gravar, editar e contar histórias. Garante já o teu lugar na lista de espera.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nuvi — O lugar onde marcas encontram creators",
+    description:
+      "Ganha com o que já sabes fazer: gravar, editar e contar histórias. Garante já o teu lugar na lista de espera.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export default function RootLayout({
