@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 
 type CursorVariant = "default" | "button" | "component" | "input";
@@ -10,6 +10,10 @@ export function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [variant, setVariant] = useState<CursorVariant>("default");
+
+  const rawPosRef = useRef({ x: -100, y: -100 });
+  const pullRef = useRef({ dx: 0, dy: 0 });
+  const isVisibleRef = useRef(false);
 
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
@@ -59,13 +63,32 @@ export function CustomCursor() {
       return "default";
     };
 
+    const applyCursorPosition = () => {
+      if (rawPosRef.current.x <= -50) return;
+      mouseX.set(rawPosRef.current.x + pullRef.current.dx);
+      mouseY.set(rawPosRef.current.y + pullRef.current.dy);
+    };
+
     const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-      if (!isVisible) setIsVisible(true);
+      rawPosRef.current = { x: e.clientX, y: e.clientY };
+      applyCursorPosition();
+      if (!isVisibleRef.current) {
+        isVisibleRef.current = true;
+        setIsVisible(true);
+      }
 
       const target = e.target as Element | null;
       setVariant(resolveCursorVariant(target));
+    };
+
+    const handleCursorPull = (e: Event) => {
+      const customEvent = e as CustomEvent<{ dx: number; dy: number }>;
+      if (!customEvent.detail) return;
+      pullRef.current = {
+        dx: customEvent.detail.dx || 0,
+        dy: customEvent.detail.dy || 0,
+      };
+      applyCursorPosition();
     };
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -84,15 +107,19 @@ export function CustomCursor() {
     };
 
     const handleMouseLeave = () => {
+      isVisibleRef.current = false;
       setIsVisible(false);
       setIsPressed(false);
+      pullRef.current = { dx: 0, dy: 0 };
     };
 
     const handleMouseEnter = () => {
+      isVisibleRef.current = true;
       setIsVisible(true);
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("nuvi:cursor-pull", handleCursorPull);
     window.addEventListener("mousedown", handleMouseDown, { passive: true });
     window.addEventListener("mouseup", handleMouseUp, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeave);
@@ -100,12 +127,13 @@ export function CustomCursor() {
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("nuvi:cursor-pull", handleCursorPull);
       window.removeEventListener("mousedown", handleMouseDown);
       window.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
     };
-  }, [isDesktop, isVisible, mouseX, mouseY]);
+  }, [isDesktop, mouseX, mouseY]);
 
   if (!isDesktop) return null;
 
@@ -151,6 +179,7 @@ export function CustomCursor() {
   return (
     <>
       <motion.div
+        id="nuvi-custom-cursor"
         aria-hidden="true"
         className="nuvi-custom-cursor"
         style={{
