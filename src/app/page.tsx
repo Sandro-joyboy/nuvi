@@ -8,6 +8,7 @@ import { Copy, Check, QrCode } from "lucide-react";
 import { track } from "@vercel/analytics";
 import { joinWaitlistAction } from "@/app/actions/waitlist";
 import { QRCodeSVG } from "@/components/QRCodeSVG";
+import { LaunchCountdown } from "@/components/LaunchCountdown";
 
 export default function HeroPage() {
   const [email, setEmail] = useState("");
@@ -559,6 +560,9 @@ export default function HeroPage() {
           </div>
         </div>
       </footer>
+
+      {/* 7. Contagem Decrescente (Lado Inferior Direito) */}
+      <LaunchCountdown />
 
       {/* Estilos CSS */}
       <style>{`
