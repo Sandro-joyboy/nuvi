@@ -329,6 +329,27 @@ function quadPoint(
   };
 }
 
+/**
+ * Builds a Nuvi liquid-blue gradient along a filament from its root to its tip.
+ */
+function createNuviFilamentFill(
+  ctx: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  alpha: number
+): string | CanvasGradient {
+  if (Math.hypot(x1 - x0, y1 - y0) < 1) {
+    return `rgba(0, 96, 224, ${alpha})`;
+  }
+  const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+  grad.addColorStop(0, `rgba(0, 90, 212, ${alpha})`);
+  grad.addColorStop(0.52, `rgba(12, 130, 250, ${alpha})`);
+  grad.addColorStop(1, `rgba(0, 84, 204, ${alpha})`);
+  return grad;
+}
+
 export function VenomButtonEffect({
   buttonRef,
   wrapperRef,
@@ -536,8 +557,8 @@ export function VenomButtonEffect({
       }[] = [];
 
       ctx.save();
-      ctx.shadowColor = "rgba(5, 15, 35, 0.24)";
-      ctx.shadowBlur = 4;
+      ctx.shadowColor = "rgba(0, 60, 155, 0.34)";
+      ctx.shadowBlur = 5;
       ctx.shadowOffsetY = 1;
 
       for (let i = 0; i < STRANDS.length; i++) {
@@ -641,7 +662,14 @@ export function VenomButtonEffect({
 
         const wPinch = wRoot * 0.26 + wMid * 0.74;
 
-        ctx.fillStyle = `rgba(9, 11, 16, ${spec.opacity * easedExt})`;
+        ctx.fillStyle = createNuviFilamentFill(
+          ctx,
+          rx,
+          ry,
+          tipPt.x,
+          tipPt.y,
+          spec.opacity * easedExt
+        );
         ctx.beginPath();
         ctx.moveTo(pRootL.x, pRootL.y);
         ctx.quadraticCurveTo(
@@ -703,7 +731,14 @@ export function VenomButtonEffect({
         const rootMidX = (a.rx + b.rx) * 0.5;
         const rootMidY = (a.ry + b.ry) * 0.5;
 
-        ctx.fillStyle = `rgba(9, 11, 16, ${0.78 * Math.min(a.ext, b.ext)})`;
+        ctx.fillStyle = createNuviFilamentFill(
+          ctx,
+          rootMidX,
+          rootMidY,
+          (ptA.x + ptB.x) * 0.5,
+          (ptA.y + ptB.y) * 0.5,
+          0.8 * Math.min(a.ext, b.ext)
+        );
         ctx.beginPath();
         ctx.moveTo(a.rx, a.ry);
         ctx.lineTo(ptA.x, ptA.y);
@@ -713,12 +748,24 @@ export function VenomButtonEffect({
         ctx.fill();
       }
 
-      // Pequeno halo viscoso onde os fios agarram o cursor
+      // Pequeno halo viscoso azul Nuvi onde os fios agarram o cursor
       if (masterProgress > 0.25 && cap.edgeDist > 4) {
         const gripAlpha = clamp((masterProgress - 0.2) * 0.9, 0, 0.85);
-        ctx.fillStyle = `rgba(9, 11, 16, ${gripAlpha})`;
+        const gripGrad = ctx.createRadialGradient(
+          targetTipX,
+          targetTipY,
+          0,
+          targetTipX,
+          targetTipY,
+          7.2
+        );
+        gripGrad.addColorStop(0, `rgba(0, 84, 204, ${gripAlpha})`);
+        gripGrad.addColorStop(0.6, `rgba(12, 130, 250, ${gripAlpha * 0.9})`);
+        gripGrad.addColorStop(1, "rgba(78, 167, 235, 0)");
+
+        ctx.fillStyle = gripGrad;
         ctx.beginPath();
-        ctx.arc(targetTipX, targetTipY, 6.2, 0, Math.PI * 2);
+        ctx.arc(targetTipX, targetTipY, 7.2, 0, Math.PI * 2);
         ctx.fill();
       }
 
