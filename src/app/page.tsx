@@ -2,19 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, QrCode } from "lucide-react";
 import { track } from "@vercel/analytics";
 import { joinWaitlistAction } from "@/app/actions/waitlist";
 import { QRCodeSVG } from "@/components/QRCodeSVG";
 import { LaunchCountdown } from "@/components/LaunchCountdown";
-import { VenomButtonEffect } from "@/components/VenomButtonEffect";
 
 export default function HeroPage() {
-  const startBtnRef = useRef<HTMLButtonElement | null>(null);
-  const startWrapperRef = useRef<HTMLDivElement | null>(null);
-
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isShareExpanded, setIsShareExpanded] = useState(false);
@@ -133,13 +129,6 @@ export default function HeroPage() {
         <div className="hero-bg-overlay" />
       </div>
 
-      {/* Efeito Venom Desktop antes do hover no botão Começar agora */}
-      <VenomButtonEffect
-        buttonRef={startBtnRef}
-        wrapperRef={startWrapperRef}
-        active={!showInputState && !isSubmitted}
-      />
-
       {/* 2. Topo: Logótipo */}
       <header className="hero-header">
         <img
@@ -171,12 +160,11 @@ export default function HeroPage() {
           Ganha com o que já sabes fazer: gravar, editar e contar histórias.
         </p>
 
-        <div className="interaction-container" ref={startWrapperRef}>
+        <div className="interaction-container">
           <AnimatePresence mode="wait">
             {!showInputState ? (
               <motion.button
                 key="start-btn"
-                ref={startBtnRef}
                 type="button"
                 className="btn-comecar"
                 onClick={() => {
