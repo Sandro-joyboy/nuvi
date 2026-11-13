@@ -513,9 +513,23 @@ export default function HeroPage() {
           />
         </svg>
 
-        <div className="orbit-node node-yt" data-cursor="component">
-          <img src="/YT.png" alt="YouTube" draggable={false} className="float-icon float-1 icon-social" />
-        </div>
+        <a
+          href="https://www.youtube.com/@sandro_joyboy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="orbit-node node-yt orbit-node-link"
+          data-cursor="button"
+          onClick={() => track("click_youtube_sandro")}
+          aria-label="YouTube de Sandro (@sandro_joyboy)"
+        >
+          <span className="orbit-handle-tooltip">@sandro_joyboy</span>
+          <img
+            src="/YT.png"
+            alt="YouTube @sandro_joyboy"
+            draggable={false}
+            className="float-icon float-1 icon-social"
+          />
+        </a>
         <div className="orbit-node node-calendary" data-cursor="component">
           <img src="/CALENDARY.png" alt="Calendário" draggable={false} className="float-icon float-2 icon-asset" />
         </div>
@@ -1198,6 +1212,62 @@ export default function HeroPage() {
 
         .orbit-node:hover {
           transform: translate(-50%, -50%) scale(1.14) translateY(-4px);
+        }
+
+        .orbit-node-link {
+          text-decoration: none;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .orbit-handle-tooltip {
+          position: absolute;
+          bottom: calc(100% + 8px);
+          left: -4px;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.28) 0%,
+            rgba(255, 255, 255, 0.12) 100%
+          );
+          backdrop-filter: blur(14px) saturate(180%);
+          -webkit-backdrop-filter: blur(14px) saturate(180%);
+          border: 1px solid rgba(255, 255, 255, 0.45);
+          box-shadow: 0 6px 16px rgba(0, 64, 140, 0.2);
+          font-family: var(--font-sf-pro), -apple-system, sans-serif;
+          font-size: 11.5px;
+          line-height: 1.2;
+          font-weight: 500;
+          color: #FFFFFF;
+          white-space: nowrap;
+          opacity: 0;
+          transform: translateY(4px);
+          pointer-events: none;
+          transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (min-width: 640px) {
+          .orbit-handle-tooltip {
+            left: 50%;
+            transform: translate(-50%, 4px);
+          }
+          .orbit-node-link:hover .orbit-handle-tooltip,
+          .orbit-node-link:focus-visible .orbit-handle-tooltip {
+            transform: translate(-50%, 0);
+          }
+        }
+
+        .orbit-node-link:hover .orbit-handle-tooltip,
+        .orbit-node-link:focus-visible .orbit-handle-tooltip {
+          opacity: 1;
+        }
+
+        @media (max-width: 639px) {
+          .orbit-node-link:hover .orbit-handle-tooltip,
+          .orbit-node-link:focus-visible .orbit-handle-tooltip {
+            transform: translateY(0);
+          }
         }
 
         /* Coordenadas exatas da curva quadrática M 0 240 Q 500 -192 1000 240 (viewBox 1000x240) */
